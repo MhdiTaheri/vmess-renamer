@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VMess Configuration Changer</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: #222;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      width: 80%;
+      margin: 50px auto;
+      padding: 30px;
+      background-color: #333;
+      border-radius: 8px;
+      box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
+      animation: highlight 3s infinite alternate;
+    }
+
+    .form-control,
+    .result-textarea {
+      background-color: #444;
+      color: #fff;
+      border: none;
+    }
+
+    .form-control::placeholder,
+    .result-textarea::placeholder {
+      color: #bbb;
+    }
+
+    .btn-success,
+    .copy-button {
+      background-color: #28a745;
+      border: none;
+    }
+
+    .btn-success:hover,
+    .copy-button:hover {
+      background-color: #218838;
+    }
+
+    .btn-primary {
+      background-color: #007bff;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-color: #0056b3;
+    }
+
+    .result-textarea {
+      height: 200px;
+      resize: vertical;
+      margin-bottom: 15px;
+    }
+
+    .space {
+      margin-bottom: 30px;
+    }
+
+    .swal2-popup {
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    @keyframes highlight {
+      from {
+        box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
+      }
+      to {
+        box-shadow: 0px 0px 20px 10px rgba(255, 255, 255, 0.3);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1 class="text-center mb-4">VMess Configuration Changer</h1>
+
+    <div class="form-group">
+      <label for="vmessConfig">Enter VMess Configurations:</label>
+      <textarea class="form-control" id="vmessConfig" placeholder="Enter VMess configurations here, each on a new line"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="nameInput">Enter Name:</label>
+      <input type="text" class="form-control" id="nameInput" placeholder="Enter Name">
+    </div>
+
+    <button class="btn btn-success btn-block mb-3" onclick="changeNames()">Change VMess Names</button>
+
+    <div class="row space"></div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <h3>Result:</h3>
+        <textarea class="form-control result-textarea" id="resultArea" readonly></textarea>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block copy-button" onclick="copyResults()">Copy Results</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+  <script>
+    function changeNames() {
+      const vmessConfigs = document.getElementById('vmessConfig').value.split('\n');
+      const nameInput = document.getElementById('nameInput').value;
+
+      let modifiedConfigs = '';
+
+      vmessConfigs.forEach(vmessConfig => {
+        if (!vmessConfig.trim()) {
+          return; // Skip empty lines
+        }
+
+        const configParts = vmessConfig.split('://');
+        if (configParts.length !== 2 || configParts[0] !== 'vmess') {
+          showAlert('Invalid VMess configuration!', 'error');
+          return;
+        }
+
+        const base64Config = configParts[1];
+        const decodedConfig = atob(base64Config);
+        let vmessObject;
+        try {
+          vmessObject = JSON.parse(decodedConfig);
+        } catch (error) {
+          showAlert('Invalid VMess configuration!', 'error');
+          return;
+        }
+
+        vmessObject.ps = nameInput;
+
+        const modifiedConfig = 'vmess://' + btoa(JSON.stringify(vmessObject));
+
+        modifiedConfigs += modifiedConfig + '\n';
+      });
+
+      document.getElementById('resultArea').value = modifiedConfigs.trim();
+    }
+
+    function copyResults() {
+      const resultTextarea = document.getElementById('resultArea');
+      resultTextarea.select();
+      document.execCommand('copy');
+      showAlert('Results copied to clipboard!', 'success');
+    }
+
+    function showAlert(message, icon) {
+      Swal.fire({
+        icon: icon,
+        title: message,
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+        toast: true,
+        position: 'top-end',
+        background: '#333',
+        iconColor: '#fff',
+        customClass: {
+          popup: 'colored-toast'
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
